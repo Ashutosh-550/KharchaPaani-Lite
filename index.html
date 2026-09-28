@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KharchaPaani — Smart Expense Tracker for Students</title>
+<meta name="description" content="KharchaPaani helps students track expenses, categorize spending, monitor budgets, and analyze financial habits with UPI SMS auto-import.">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+
+  body {
+    font-family: 'Nunito', Arial, sans-serif;
+    font-size: 14px;
+    background: #f5f0eb;
+    color: #333;
+  }
+
+  .app { max-width: 1100px; margin: auto; padding: 24px; }
+
+  .brand { font-size: 24px; font-weight: 700; }
+  .brand .kh { color: #e8652a; }
+  .brand .pa { color: #7c5cbf; }
+
+  .muted { color: #888; font-size: 12px; }
+
+  .card {
+    background: #fff;
+    border: 1px solid #e0d6cc;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+
+  .grid { display: grid; gap: 14px; }
+  .metrics { grid-template-columns: repeat(4, 1fr); margin: 18px 0; }
+  .split { grid-template-columns: 1fr 1fr; }
+  .insights { grid-template-columns: repeat(3, 1fr); margin-top: 14px; }
+  .analytics { grid-template-columns: .75fr 1.5fr 1fr; margin-top: 14px; }
+
+  .amount { font-size: 20px; font-weight: 700; margin-top: 6px; }
+  .green { color: #2e9e5a; }
+  .red { color: #d94040; }
+  .gold { color: #c48a15; }
+
+  /* Forms */
+  .form { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 8px; margin-top: 12px; }
+  input, select, textarea { padding: 9px 10px; border: 1px solid #ccc; border-radius: 6px; font: inherit; background: #faf7f4; color: #333; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid #e8652a; border-color: #e8652a; }
+
+  button {
+    padding: 9px 14px;
+    border: none;
+    border-radius: 6px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    background: #e8652a;
+    color: #fff;
+  }
+  button:hover { background: #d05520; }
+  .btn-secondary { background: #ddd; color: #555; }
+  .btn-secondary:hover { background: #ccc; }
+  .btn-outline { background: transparent; border: 1px solid #ccc; color: #666; }
+  .btn-outline:hover { background: #f0ebe5; }
+  .btn-danger { background: #e8c0c0; color: #8b2020; font-size: 13px; padding: 4px 8px; }
+  .btn-danger:hover { background: #daa; }
+
+  /* Transactions */
+  .tx {
+    display: grid;
+    grid-template-columns: 1fr 100px 100px 32px;
+    gap: 8px;
+    align-items: center;
+    border-bottom: 1px solid #ece5dd;
+    padding: 10px 0;
+  }
+  .tag {
+    display: inline-block;
+    background: #fff3cd;
+    color: #856404;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 12px;
+    padding: 3px 9px;
+  }
+  .upi-badge {
+    font-size: 10px;
+    font-weight: 700;
+    background: #d6e8ff;
+    color: #1a5ab8;
+    padding: 2px 6px;
+    border-radius: 6px;
+    margin-left: 4px;
+  }
+
+  /* Alerts */
+  .alert { padding: 10px; border-left: 3px solid #d94040; background: #fff0f0; border-radius: 6px; margin: 6px 0; }
+  .good { border-color: #2e9e5a; background: #eefbf2; }
+
+  /* Charts */
+  .chart { height: 120px; display: flex; align-items: end; gap: 8px; padding-top: 12px; }
+  .bar { flex: 1; min-width: 12px; border-radius: 4px 4px 0 0; background: #e8652a; position: relative; }
+  .bar span { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #888; }
+
+  /* Gauge */
+  .health { text-align: center; }
+  .gauge { width: 160px; height: 84px; overflow: hidden; margin: 14px auto 6px; position: relative; }
+  .gauge:before {
+    content: ""; position: absolute; width: 150px; height: 150px; left: 5px; top: 5px; border-radius: 50%;
+    background: conic-gradient(from 270deg, #d94040 0 42deg, #c48a15 42deg 90deg, #2e9e5a 90deg var(--score), #e0d6cc var(--score) 180deg, transparent 180deg);
+  }
+  .gauge:after { content: ""; position: absolute; width: 110px; height: 110px; left: 25px; top: 25px; border-radius: 50%; background: #fff; }
+  .gauge-value { position: absolute; z-index: 2; left: 0; right: 0; top: 42px; font-size: 28px; font-weight: 700; }
+
+  /* Trend canvas */
+  .trend { height: 180px; width: 100%; display: block; margin-top: 6px; }
+
+  /* Donut */
+  .donut-wrap { display: flex; align-items: center; gap: 16px; margin-top: 14px; }
+  .donut { width: 110px; height: 110px; min-width: 110px; border-radius: 50%; position: relative; }
+  .donut:after { content: ""; position: absolute; inset: 22px; background: #fff; border-radius: 50%; }
+  .donut-total { position: absolute; z-index: 2; inset: 0; display: grid; place-content: center; text-align: center; font-size: 12px; }
+  .legend-row { display: grid; grid-template-columns: 10px 1fr auto; gap: 6px; align-items: center; margin: 6px 0; font-size: 11px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* Recommendations */
+  .recommendations { margin-top: 14px; }
+  .recommendation { padding: 10px 12px; border-left: 3px solid #c48a15; background: #fffcf0; border-radius: 6px; margin-top: 8px; }
+  .recommendation.good { border-color: #2e9e5a; background: #eefbf2; }
+
+  .section-head { display: flex; justify-content: space-between; align-items: center; }
+  .section-head button { font-size: 12px; }
+
+  /* Header */
+  .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .account { display: flex; align-items: center; gap: 8px; }
+  .account span { font-size: 12px; color: #888; }
+
+  /* Login */
+  .login-screen {
+    position: fixed; inset: 0; z-index: 50;
+    background: #f5f0eb;
+    display: grid; place-items: center; padding: 20px;
+  }
+  .login-screen.hidden { display: none; }
+  .login-card {
+    width: min(400px, 100%);
+    background: #fff;
+    border: 1px solid #e0d6cc;
+    border-radius: 12px;
+    padding: 28px;
+  }
+  .login-card .brand { text-align: center; font-size: 28px; }
+  .login-card > p { text-align: center; margin: 6px 0 20px; }
+  .login-card label { display: block; color: #666; font-size: 12px; font-weight: 700; margin-top: 12px; }
+  .login-card input { width: 100%; margin-top: 6px; }
+  .login-card button { width: 100%; margin-top: 18px; padding: 11px; }
+  .login-switch { text-align: center; margin-top: 14px; }
+  .login-switch button { width: auto; background: transparent; color: #e8652a; font-weight: 700; border: 0; padding: 2px; }
+  .login-switch button:hover { background: transparent; text-decoration: underline; }
+  .auth-message { min-height: 16px; color: #d94040; font-size: 12px; margin-top: 8px; text-align: center; }
+  .demo-login {
+    background: #fff3cd; border: 1px solid #ffe69c;
+    border-radius: 6px; padding: 8px; margin-top: 14px;
+    text-align: center; font-size: 11px; color: #856404;
+  }
+
+  /* UPI Import */
+  .upi-card { margin-top: 0; }
+  .upi-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .upi-modes { display: flex; gap: 6px; }
+  .upi-mode-btn {
+    padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 700;
+    border: 1px solid #ccc; background: #fff; color: #888; cursor: pointer;
+  }
+  .upi-mode-btn.active { background: #d6e8ff; color: #1a5ab8; border-color: #90bfff; }
+  .upi-mode-btn:hover { border-color: #90bfff; color: #1a5ab8; }
+
+  .upi-paste-area { margin-top: 12px; }
+  .upi-paste-area textarea {
+    width: 100%; min-height: 100px;
+    border: 1px dashed #ccc; border-radius: 8px;
+    font: 13px 'Nunito', monospace; padding: 12px; resize: vertical;
+    background: #faf7f4;
+  }
+  .upi-actions { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+  .upi-actions .count { font-size: 12px; color: #888; margin-left: auto; }
+
+  .parsed-preview { margin-top: 12px; max-height: 280px; overflow-y: auto; }
+  .parsed-item {
+    display: grid; grid-template-columns: auto 1fr auto auto; gap: 8px; align-items: center;
+    padding: 8px 10px; border: 1px solid #e0d6cc; border-radius: 8px; margin-bottom: 6px;
+    background: #faf7f4;
+  }
+  .parsed-item .pi-icon { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 700; }
+  .pi-debit .pi-icon { background: #fdd; color: #d94040; }
+  .pi-credit .pi-icon { background: #d4f5e0; color: #2e9e5a; }
+  .parsed-item .pi-merchant { font-weight: 700; font-size: 13px; }
+  .parsed-item .pi-meta { font-size: 11px; color: #888; }
+  .parsed-item .pi-amount { font-size: 14px; font-weight: 700; white-space: nowrap; }
+  .parsed-item .pi-tag { font-size: 10px; background: #fff3cd; color: #856404; padding: 2px 6px; border-radius: 8px; font-weight: 700; }
+
+  /* Live Sync */
+  .live-panel { margin-top: 12px; display: none; }
+  .live-panel.active { display: block; }
+  .live-status {
+    display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 8px;
+    background: #eefbf2; border: 1px solid #b7e4c7; margin-bottom: 10px;
+  }
+  .live-dot { width: 10px; height: 10px; border-radius: 50%; background: #2e9e5a; }
+  .live-dot.pulsing { animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+  .live-status-text { font-size: 13px; font-weight: 700; color: #1a6b38; }
+  .live-status-sub { font-size: 11px; color: #6b9080; }
+  .live-feed { max-height: 300px; overflow-y: auto; }
+  .live-count { font-size: 12px; color: #888; margin-top: 6px; text-align: right; }
+
+  /* Responsive */
+  @media(max-width:900px) { .analytics { grid-template-columns: 1fr 1fr; } .category-card { grid-column: 1/-1; } .donut-wrap { justify-content: center; } }
+  @media(max-width:760px) { .metrics,.insights,.split { grid-template-columns: 1fr 1fr; } .form { grid-template-columns: 1fr 1fr; } .tx { grid-template-columns: 1fr 80px 70px 28px; } }
+  @media(max-width:550px) { .metrics,.insights,.split,.analytics { grid-template-columns: 1fr; } .category-card { grid-column: auto; } .app { padding: 14px; } .account span { display: none; } .upi-header { flex-direction: column; align-items: flex-start; } }
+</style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<section class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="brand"><span class="kh">Kharcha</span><span class="pa">Paani</span></div>
+    <p class="muted" id="authSubtitle">Sign in to track your expenses</p>
+    <form id="authForm" onsubmit="authenticate(event)">
+      <label>Email<input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" required></label>
+      <label>Password<input id="authPassword" type="password" placeholder="At least 6 characters" minlength="6" autocomplete="current-password" required></label>
+      <button id="authSubmit" type="submit">Sign in</button>
+      <div class="auth-message" id="authMessage"></div>
+    </form>
+    <div class="demo-login">Demo login: <b>demo@kharchapaani.app</b> / <b>demo123</b></div>
+    <p class="login-switch"><span id="switchText">New here?</span> <button type="button" onclick="toggleAuthMode()" id="switchButton">Create account</button></p>
+  </div>
+</section>
+
+<!-- Dashboard -->
+<main class="app">
+  <header>
+    <div class="header-row">
+      <div>
+        <div class="brand"><span class="kh">Kharcha</span><span class="pa">Paani</span></div>
+        <p class="muted">Your student expense tracker with UPI auto-import</p>
+      </div>
+      <div class="account">
+        <span id="currentUser"></span>
+        <button class="btn-danger" onclick="logout()">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Add Transaction -->
+  <section class="card">
+    <b>Add a transaction</b>
+    <div class="form">
+      <input id="merchant" placeholder="Merchant — e.g. Swiggy, Amazon, Uber">
+      <input id="amount" type="number" min="1" placeholder="Amount">
+      <input id="date" type="date">
+      <select id="type">
+        <option value="Auto">Auto-categorize</option>
+        <option>Income</option><option>Food</option><option>Shopping</option>
+        <option>Transport</option><option>Rent</option><option>Utilities</option>
+        <option>Entertainment</option><option>Healthcare</option>
+      </select>
+      <button onclick="add()">Add</button>
+    </div>
+  </section>
+
+  <!-- UPI SMS Import -->
+  <section class="card upi-card" id="upiSection">
+    <div class="upi-header">
+      <div>
+        <b>UPI Transaction Import</b>
+        <p class="muted" style="margin-top:3px">Import transactions from your bank SMS — auto-categorized instantly.</p>
+      </div>
+      <div class="upi-modes">
+        <button class="upi-mode-btn active" id="btnPasteMode" onclick="setUpiMode('paste')">Paste SMS</button>
+        <button class="upi-mode-btn" id="btnLiveMode" onclick="setUpiMode('live')">Live Sync Demo</button>
+      </div>
+    </div>
+
+    <div class="upi-paste-area" id="pastePanel">
+      <textarea id="smsInput" placeholder="Paste your bank UPI SMS messages here...&#10;&#10;Example:&#10;Rs.250.00 debited from A/c XX1234 to VPA swiggy@axl on 28-09-26. UPI Ref: 628374912834&#10;&#10;Separate multiple SMS with blank lines."></textarea>
+      <div class="upi-actions">
+        <button onclick="parseSmsInput()">Parse & Preview</button>
+        <button class="btn-secondary" onclick="clearSmsInput()">Clear</button>
+        <span class="count" id="parseCount"></span>
+      </div>
+    </div>
+
+    <div class="parsed-preview" id="parsedPreview" style="display:none"></div>
+    <div class="upi-actions" id="importActions" style="display:none;margin-top:8px">
+      <button onclick="importParsed()">Import All</button>
+      <button class="btn-secondary" onclick="clearParsed()">Discard</button>
+      <span class="count" id="importCount"></span>
+    </div>
+
+    <div class="live-panel" id="livePanel">
+      <div class="live-status">
+        <div class="live-dot" id="liveDot"></div>
+        <div>
+          <div class="live-status-text" id="liveStatusText">Ready to simulate</div>
+          <div class="live-status-sub" id="liveStatusSub">Simulates real-time SMS reading from your phone</div>
+        </div>
+        <button id="liveToggle" onclick="toggleLiveSync()" style="margin-left:auto">Start Live Sync</button>
+      </div>
+      <div class="live-feed" id="liveFeed"></div>
+      <div class="live-count" id="liveCount"></div>
+    </div>
+  </section>
+
+  <section class="grid metrics" id="metrics"></section>
+
+  <section class="grid analytics">
+    <div class="card health">
+      <b>Financial Health</b>
+      <p class="muted">Based on your balance and savings rate.</p>
+      <div class="gauge" id="gauge"><div class="gauge-value" id="healthScore">0</div></div>
+      <b id="healthLabel">Add data to begin</b>
+    </div>
+    <div class="card">
+      <b>Income vs Expense Trend</b>
+      <p class="muted">Your last six months of activity.</p>
+      <canvas class="trend" id="trend"></canvas>
+    </div>
+    <div class="card category-card">
+      <b>Spending by Category</b>
+      <p class="muted">Where your money goes.</p>
+      <div class="donut-wrap">
+        <div class="donut" id="donut"><div class="donut-total" id="donutTotal"></div></div>
+        <div id="categoryLegend" style="width:100%"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid split">
+    <div class="card">
+      <b>Predicted Monthly Expenses</b>
+      <p class="muted">Projected to month-end based on current spending.</p>
+      <div class="amount gold" id="forecast"></div>
+      <div class="chart" id="chart"></div>
+    </div>
+    <div class="card">
+      <b>Unusual-Expense Monitor</b>
+      <p class="muted">Flags unusually large transactions.</p>
+      <div id="alerts"></div>
+    </div>
+  </section>
+
+  <section class="grid insights" id="insights"></section>
+
+  <section class="card recommendations">
+    <b>Insights & Recommendations</b>
+    <p class="muted">Suggestions based on your spending.</p>
+    <div id="recommendations"></div>
+  </section>
+
+  <section class="card">
+    <div class="section-head">
+      <b>Transactions</b>
+      <button class="btn-outline" onclick="seedDemo()">Load demo data</button>
+    </div>
+    <div id="transactions"></div>
+  </section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id),
+      fmt=n=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(n||0);
+let data=[],activeUser='',authMode='login';
+$('date').value=new Date().toISOString().slice(0,10);
+
+const userDataKey=()=>`kharchapaaniLedger:${activeUser}`,
+      saveData=()=>localStorage.setItem(userDataKey(),JSON.stringify(data));
+
+/* Auth */
+async function hashPassword(v){const b=new TextEncoder().encode(v),h=await crypto.subtle.digest('SHA-256',b);return[...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+
+function toggleAuthMode(){
+  authMode=authMode==='login'?'signup':'login';
+  $('authSubmit').textContent=authMode==='login'?'Sign in':'Create account';
+  $('authSubtitle').textContent=authMode==='login'?'Sign in to track your expenses':'Create a free account on this device';
+  $('switchText').textContent=authMode==='login'?'New here?':'Already have an account?';
+  $('switchButton').textContent=authMode==='login'?'Create account':'Sign in';
+  $('authMessage').textContent='';
+}
+
+async function authenticate(e){
+  e.preventDefault();
+  const email=$('authEmail').value.trim().toLowerCase(),pw=$('authPassword').value,
+        users=JSON.parse(localStorage.kharchapaaniUsers||'{}'),hash=await hashPassword(pw);
+  if(authMode==='signup'){
+    if(users[email]){$('authMessage').textContent='Account already exists.';return}
+    users[email]={passwordHash:hash};localStorage.kharchapaaniUsers=JSON.stringify(users);
+  }else if(!users[email]||users[email].passwordHash!==hash){
+    $('authMessage').textContent='Email or password is incorrect.';return;
+  }
+  openDashboard(email);
+}
+
+function openDashboard(email){
+  activeUser=email;sessionStorage.kharchapaaniSession=email;
+  data=JSON.parse(localStorage.getItem(userDataKey())||'[]');
+  $('currentUser').textContent=email;$('loginScreen').classList.add('hidden');render();
+}
+
+function logout(){
+  if(activeUser) saveData();
+  stopLiveSync();
+  delete sessionStorage.kharchapaaniSession;
+  activeUser=''; data=[];
+  $('authPassword').value='';$('authMessage').textContent='';
+  $('loginScreen').classList.remove('hidden');
+}
+
+async function initAuth(){
+  let users=JSON.parse(localStorage.kharchapaaniUsers||'{}');
+  if(!users['demo@kharchapaani.app']){users['demo@kharchapaani.app']={passwordHash:await hashPassword('demo123')};localStorage.kharchapaaniUsers=JSON.stringify(users)}
+  const s=sessionStorage.kharchapaaniSession;
+  if(s&&users[s])openDashboard(s);
+}
+
+/* Classifier */
+function classify(name){
+  let n=name.toLowerCase(),
+      map={
+        Income:['salary','payroll','employer','wages','income','freelance','bonus','credited','received','refund'],
+        Food:['swiggy','zomato','restaurant','cafe','coffee','grocery','supermarket','bigbasket','blinkit','zepto','pizza','bakery','dominos','mcdonalds','burger','kfc','starbucks','chai','canteen','mess','food','eat','dine','kitchen'],
+        Shopping:['amazon','flipkart','myntra','ajio','mall','clothing','retail','store','meesho','nykaa','shop'],
+        Transport:['uber','ola','rapido','metro','petrol','fuel','parking','irctc','taxi','auto','cab','yulu','bus','train','flight','indigo','vistara'],
+        Entertainment:['netflix','spotify','prime','bookmyshow','cinema','movie','gaming','hotstar','jiocinema','youtube','premium'],
+        Utilities:['airtel','jio','electricity','water','internet','broadband','recharge','vi','bsnl','postpaid','prepaid','bill'],
+        Healthcare:['pharmacy','apollo','hospital','clinic','medical','medplus','1mg','pharmeasy','netmeds','doctor'],
+        Rent:['rent','landlord','pg','hostel','accommodation']
+      };
+  for(const [cat,words] of Object.entries(map))if(words.some(w=>n.includes(w)))return cat;
+  return 'Shopping';
+}
+
+/* Add / Remove */
+function add(){
+  let merchant=$('merchant').value.trim(),amount=+$('amount').value,category=$('type').value;
+  if(!merchant||!amount)return alert('Enter a merchant and amount.');
+  if(category==='Auto')category=classify(merchant);
+  data.unshift({id:Date.now(),merchant,amount,category,date:$('date').value,source:'manual'});
+  saveData();$('merchant').value='';$('amount').value='';render();
+}
+function remove(id){data=data.filter(x=>x.id!==id);saveData();render()}
+
+/* ── UPI SMS Parser ── */
+const smsPatterns=[
+  {regex:/(?:Rs\.?|INR\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)\s*(?:has been\s+)?(?:debited|transferred|paid|sent)\b.*?(?:to|towards)\s+(?:VPA\s+)?(.+?)(?:\s+on\s+|\s*\.\s*UPI|\s*UPI\s*Ref|\s*$)/i,type:'debit',amountGroup:1,merchantGroup:2},
+  {regex:/(?:Paid|Sent|Transferred)\s*(?:Rs\.?|INR\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)\s*(?:to|towards)\s+(.+?)(?:\s+on\s+|\s*\.\s*|\s*via|\s*UPI|\s*Ref|\s*$)/i,type:'debit',amountGroup:1,merchantGroup:2},
+  {regex:/(?:Rs\.?|INR\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)\s*(?:has been\s+)?(?:credited|received|deposited)\b.*?(?:from|by)\s+(.+?)(?:\s+on\s+|\s*\.\s*UPI|\s*UPI\s*Ref|\s*$)/i,type:'credit',amountGroup:1,merchantGroup:2},
+  {regex:/(?:Received|Got)\s*(?:Rs\.?|INR\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)\s*(?:from)\s+(.+?)(?:\s+on\s+|\s*\.\s*|\s*via|\s*UPI|\s*Ref|\s*$)/i,type:'credit',amountGroup:1,merchantGroup:2},
+  {regex:/(?:Debited|Deducted)\s*(?:Rs\.?|INR\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)\s*.*?(?:for|to|towards)\s+(?:UPI\s+(?:txn|transaction)\s+(?:to|for)\s+)?(.+?)(?:\s*\.\s*|\s*UPI\s*Ref|\s*Txn|\s*$)/i,type:'debit',amountGroup:1,merchantGroup:2},
+  {regex:/A\/c\s*\w+\s*debited\s*(?:for|by)\s*(?:Rs\.?|INR\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)\b.*?(?:UPI\s+(?:to|for)|to)\s+(.+?)(?:\s*\.\s*|\s*Ref|\s*$)/i,type:'debit',amountGroup:1,merchantGroup:2},
+  {regex:/UPI[-\/](.+?)[-\/].*?[-\/](?:Debit|Dr)[-\/](?:Rs\.?|INR\.?|₹?)\s*([\d,]+(?:\.\d{1,2})?)/i,type:'debit',amountGroup:2,merchantGroup:1},
+  {regex:/(?:₹|Rs\.?\s*|INR\s*)([\d,]+(?:\.\d{1,2})?)\s*(?:paid|sent|transferred)\s+(?:to)\s+(.+?)(?:\s+via|\s+through|\s+using|\s*\.\s*|\s*$)/i,type:'debit',amountGroup:1,merchantGroup:2}
+];
+
+function extractDateFromSms(text){
+  const p=[/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/,/(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+(\d{2,4})/i];
+  for(const r of p){const m=text.match(r);if(m){let d,mo,y;if(m[2]&&isNaN(m[2])){d=parseInt(m[1]);mo=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'].indexOf(m[2].slice(0,3).toLowerCase())+1;y=parseInt(m[3])}else{d=parseInt(m[1]);mo=parseInt(m[2]);y=parseInt(m[3])}if(y<100)y+=2000;if(mo>=1&&mo<=12&&d>=1&&d<=31)return`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`}}
+  return new Date().toISOString().slice(0,10);
+}
+
+function cleanMerchantName(raw){
+  let n=raw.trim().replace(/\s*on\s+\d.*/i,'').replace(/\s*\.?\s*UPI.*/i,'').replace(/\s*Ref\s*\.?\s*No?.*/i,'').replace(/\s*Txn\s*\.?\s*ID?.*/i,'').replace(/\s*IMPS.*/i,'').replace(/\s*NEFT.*/i,'').replace(/@\w+/,'').replace(/[.\-]+$/,'').trim();
+  if(n===n.toUpperCase()&&n.length>2)n=n.charAt(0)+n.slice(1).toLowerCase();
+  return n||'UPI Transaction';
+}
+
+function parseSingleSms(text){
+  text=text.trim();if(!text)return null;
+  for(const p of smsPatterns){const m=text.match(p.regex);if(m){const a=parseFloat(m[p.amountGroup].replace(/,/g,''));if(isNaN(a)||a<=0)continue;const merchant=cleanMerchantName(m[p.merchantGroup]),category=p.type==='credit'?'Income':classify(merchant);return{merchant,amount:a,category,date:extractDateFromSms(text),type:p.type,originalSms:text}}}
+  return null;
+}
+
+function parseMultipleSms(text){
+  return text.split(/\n\s*\n|\n(?=(?:Rs\.?|INR|₹|Paid|Sent|Received|Debited|Credited|Dear|Your|A\/c|UPI))/i).map(b=>b.trim()).filter(b=>b.length>10).map(parseSingleSms).filter(Boolean);
+}
+
+/* UPI UI */
+let parsedTransactions=[],upiMode='paste';
+
+function setUpiMode(mode){
+  upiMode=mode;
+  $('btnPasteMode').classList.toggle('active',mode==='paste');
+  $('btnLiveMode').classList.toggle('active',mode==='live');
+  $('pastePanel').style.display=mode==='paste'?'block':'none';
+  $('parsedPreview').style.display='none';$('importActions').style.display='none';
+  $('livePanel').classList.toggle('active',mode==='live');
+  if(mode!=='live')stopLiveSync();
+}
+
+function parseSmsInput(){
+  parsedTransactions=parseMultipleSms($('smsInput').value);
+  if(!parsedTransactions.length){$('parseCount').textContent='No valid UPI transactions found.';$('parsedPreview').style.display='none';$('importActions').style.display='none';return}
+  $('parseCount').textContent=parsedTransactions.length+' transaction(s) detected';
+  $('parsedPreview').style.display='block';$('importActions').style.display='flex';
+  $('importCount').textContent=parsedTransactions.length+' ready to import';
+  $('parsedPreview').innerHTML=parsedTransactions.map(t=>`
+    <div class="parsed-item ${t.type==='credit'?'pi-credit':'pi-debit'}">
+      <div class="pi-icon">${t.type==='credit'?'↓':'↑'}</div>
+      <div><div class="pi-merchant">${t.merchant}</div><div class="pi-meta">${t.date}</div></div>
+      <div class="pi-amount ${t.type==='credit'?'green':'red'}">${t.type==='credit'?'+':'-'}${fmt(t.amount)}</div>
+      <span class="pi-tag">${t.category}</span>
+    </div>`).join('');
+}
+
+function importParsed(){
+  for(const t of parsedTransactions)data.unshift({id:Date.now()+Math.random()*1000|0,merchant:t.merchant,amount:t.amount,category:t.category,date:t.date,source:'upi-sms'});
+  saveData();parsedTransactions=[];$('parsedPreview').style.display='none';$('importActions').style.display='none';$('smsInput').value='';
+  $('parseCount').textContent='Imported successfully!';setTimeout(()=>$('parseCount').textContent='',3000);render();
+}
+function clearParsed(){parsedTransactions=[];$('parsedPreview').style.display='none';$('importActions').style.display='none';$('parseCount').textContent=''}
+function clearSmsInput(){$('smsInput').value='';clearParsed();$('parseCount').textContent=''}
+
+/* Live Sync Demo */
+let liveSyncInterval=null,liveSyncRunning=false,liveSyncCount=0;
+const demoSmsMessages=[
+  'Rs.149.00 debited from A/c XX4521 to VPA swiggy@axl on 28-09-26. UPI Ref: 628374912834',
+  'Rs.30.00 debited from A/c XX4521 to VPA rapido@ybl on 28-09-26. UPI Ref: 628374918271',
+  'Rs.250.00 debited from A/c XX4521 to VPA zomato@paytm on 27-09-26. UPI Ref: 627488291034',
+  'Rs.15000.00 credited to your A/c XX4521 from MONTHLY ALLOWANCE on 01-09-26. UPI Ref: 901283746281',
+  'Rs.499.00 debited from A/c XX4521 to VPA netflix@icici on 15-09-26. UPI Ref: 628374919283',
+  'Rs.60.00 debited from A/c XX4521 to VPA metro@upi on 28-09-26. UPI Ref: 628374919301',
+  'Paid Rs.85 to Chai Point via UPI. Txn ID: UPI628374920112',
+  'Rs.1299.00 debited from A/c XX4521 to VPA amazon@apl on 22-09-26. UPI Ref: 625182937462',
+  'Rs.200.00 debited from A/c XX4521 to VPA uber@axl on 25-09-26. UPI Ref: 626291837462',
+  'Rs.399.00 debited from A/c XX4521 to VPA spotify@ybl on 10-09-26. UPI Ref: 623918273647',
+  'Rs.45.00 debited from A/c XX4521 to VPA canteen@upi on 28-09-26. UPI Ref: 628374920891',
+  'Received Rs.500 from RAHUL SHARMA via UPI. Ref: 628374921002',
+  'Rs.350.00 debited from A/c XX4521 to VPA bookmyshow@paytm on 26-09-26. UPI Ref: 627192837465',
+  'Rs.120.00 debited from A/c XX4521 to VPA pharmacyplus@ybl on 20-09-26. UPI Ref: 624918273641',
+  'Rs.2500.00 debited from A/c XX4521 to VPA landlordpg@sbi on 05-09-26. UPI Ref: 622918273648',
+  'Rs.199.00 debited from A/c XX4521 to VPA jiocinema@axl on 12-09-26. UPI Ref: 623618273649',
+  'Paid Rs.75 to Auto Rickshaw via UPI. Txn ID: UPI628374921234',
+  'Rs.180.00 debited from A/c XX4521 to VPA dominos@icici on 24-09-26. UPI Ref: 626018273650',
+];
+
+function toggleLiveSync(){liveSyncRunning?stopLiveSync():startLiveSync()}
+
+function startLiveSync(){
+  liveSyncRunning=true;liveSyncCount=0;let i=0;
+  $('liveDot').classList.add('pulsing');$('liveToggle').textContent='Stop';$('liveToggle').style.background='#d94040';
+  $('liveStatusText').textContent='Listening for UPI SMS...';$('liveStatusSub').textContent='Monitoring incoming bank messages';
+  $('liveFeed').innerHTML='';$('liveCount').textContent='';
+  function next(){
+    if(!liveSyncRunning||i>=demoSmsMessages.length){if(liveSyncRunning)stopLiveSync();return}
+    const parsed=parseSingleSms(demoSmsMessages[i++]);
+    if(parsed){
+      liveSyncCount++;
+      data.unshift({id:Date.now()+Math.random()*1000|0,merchant:parsed.merchant,amount:parsed.amount,category:parsed.category,date:parsed.date,source:'upi-sms'});
+      saveData();
+      $('liveFeed').insertAdjacentHTML('afterbegin',`<div class="parsed-item ${parsed.type==='credit'?'pi-credit':'pi-debit'}"><div class="pi-icon">${parsed.type==='credit'?'↓':'↑'}</div><div><div class="pi-merchant">${parsed.merchant}</div><div class="pi-meta">${parsed.date} · via UPI SMS</div></div><div class="pi-amount ${parsed.type==='credit'?'green':'red'}">${parsed.type==='credit'?'+':'-'}${fmt(parsed.amount)}</div><span class="pi-tag">${parsed.category}</span></div>`);
+      $('liveCount').textContent=liveSyncCount+' transaction(s) imported';
+      $('liveStatusText').textContent='Detected: '+parsed.merchant;
+      render();
+    }
+    liveSyncInterval=setTimeout(next,1500+Math.random()*2500);
+  }
+  liveSyncInterval=setTimeout(next,800);
+}
+
+function stopLiveSync(){
+  liveSyncRunning=false;clearTimeout(liveSyncInterval);
+  $('liveDot').classList.remove('pulsing');$('liveToggle').textContent='Start Live Sync';$('liveToggle').style.background='';
+  $('liveStatusText').textContent=liveSyncCount?'Done — '+liveSyncCount+' imported':'Ready to simulate';
+  $('liveStatusSub').textContent='Simulates real-time SMS reading from your phone';
+}
+
+/* Rendering */
+function monthKey(d){return d.slice(0,7)}
+
+function render(){
+  let now=new Date(),cur=now.toISOString().slice(0,7),
+      exp=data.filter(x=>x.category!=='Income'),inc=data.filter(x=>x.category==='Income'),
+      mExp=exp.filter(x=>monthKey(x.date)===cur),
+      total=exp.reduce((s,x)=>s+x.amount,0),earned=inc.reduce((s,x)=>s+x.amount,0),
+      spent=mExp.reduce((s,x)=>s+x.amount,0),days=Math.max(1,now.getDate()),
+      forecast=spent/days*new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+
+  $('metrics').innerHTML=
+    `<div class="card"><span class="muted">TOTAL EXPENSES</span><div class="amount red">${fmt(total)}</div></div>
+     <div class="card"><span class="muted">THIS MONTH</span><div class="amount">${fmt(spent)}</div></div>
+     <div class="card"><span class="muted">INCOME</span><div class="amount green">${fmt(earned)}</div></div>
+     <div class="card"><span class="muted">NET BALANCE</span><div class="amount ${earned-total>=0?'green':'red'}">${fmt(earned-total)}</div></div>`;
+
+  $('forecast').textContent=fmt(forecast)+' projected';
+  let months={};exp.forEach(x=>months[monthKey(x.date)]=(months[monthKey(x.date)]||0)+x.amount);
+  let keys=Object.keys(months).sort().slice(-6),max=Math.max(...keys.map(k=>months[k]),1);
+  $('chart').innerHTML=keys.length?keys.map(k=>`<div class="bar" style="height:${Math.max(9,months[k]/max*100)}%"><span>${k.slice(5)}</span></div>`).join(''):'<span class="muted">Add transactions to see chart.</span>';
+
+  let avg=exp.length?total/exp.length:0,unusual=exp.filter(x=>x.amount>Math.max(avg*2.5,5000));
+  $('alerts').innerHTML=unusual.length?unusual.slice(0,4).map(x=>`<div class="alert"><b>${x.merchant}</b> · ${fmt(x.amount)}<div class="muted">Higher than your average of ${fmt(avg)}.</div></div>`).join(''):'<div class="alert good">No unusual expenses detected.</div>';
+
+  let by={},merchants={};
+  exp.forEach(x=>{by[x.category]=(by[x.category]||0)+x.amount;merchants[x.merchant]=(merchants[x.merchant]||0)+1});
+  let top=Object.entries(by).sort((a,b)=>b[1]-a[1])[0],freq=Object.entries(merchants).sort((a,b)=>b[1]-a[1])[0],topPct=top?Math.round(top[1]/total*100):0;
+
+  $('insights').innerHTML=
+    `<div class="card"><span class="muted">TOP CATEGORY</span><div class="amount">${top?.[0]||'—'}</div><p class="muted">${top?topPct+'% of expenses · '+fmt(top[1]):'Add expenses to see.'}</p></div>
+     <div class="card"><span class="muted">MOST FREQUENT</span><div class="amount">${freq?.[0]||'—'}</div><p class="muted">${freq?freq[1]+' visits':'No activity'}</p></div>
+     <div class="card"><span class="muted">AVERAGE EXPENSE</span><div class="amount">${fmt(avg)}</div><p class="muted">Across ${exp.length} transactions</p></div>`;
+
+  $('transactions').innerHTML=data.length?data.map(x=>`
+    <div class="tx">
+      <div><b>${x.merchant}</b>${x.source==='upi-sms'?'<span class="upi-badge">UPI</span>':''}<div class="muted">${x.date}</div></div>
+      <span class="tag">${x.category}</span>
+      <span class="${x.category==='Income'?'green':''}">${x.category==='Income'?'+':'-'}${fmt(x.amount)}</span>
+      <button class="btn-danger" onclick="remove(${x.id})">×</button>
+    </div>`).join(''):'<p class="muted">No transactions yet.</p>';
+}
+
+/* Analytics */
+const categoryColors={Food:'#e85d3a',Shopping:'#d4a017',Transport:'#3b82f6',Rent:'#8b5cf6',Utilities:'#10b981',Entertainment:'#ec4899',Healthcare:'#14b8a6'};
+
+function drawTrend(exp,inc){
+  const c=$('trend'),box=c.getBoundingClientRect(),r=window.devicePixelRatio||1,w=box.width,h=box.height,ctx=c.getContext('2d');
+  c.width=w*r;c.height=h*r;ctx.scale(r,r);ctx.clearRect(0,0,w,h);
+  const ms=[];let now=new Date();for(let i=5;i>=0;i--){let d=new Date(now.getFullYear(),now.getMonth()-i,1);ms.push(d.toISOString().slice(0,7))}
+  const tots=ms.map(k=>({e:exp.filter(x=>monthKey(x.date)===k).reduce((s,x)=>s+x.amount,0),i:inc.filter(x=>monthKey(x.date)===k).reduce((s,x)=>s+x.amount,0)})),
+        mx=Math.max(1,...tots.flatMap(x=>[x.e,x.i]));
+  ctx.strokeStyle='#e0d6cc';ctx.lineWidth=1;for(let i=0;i<4;i++){let y=12+i*(h-38)/3;ctx.beginPath();ctx.moveTo(30,y);ctx.lineTo(w-8,y);ctx.stroke()}
+  ctx.fillStyle='#888';ctx.font='10px Nunito,Arial';ms.forEach((m,i)=>ctx.fillText(new Date(m+'-02').toLocaleString('en',{month:'short'}),23+i*(w-42)/5,h-5));
+  function line(k,col){ctx.strokeStyle=col;ctx.lineWidth=3;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();tots.forEach((t,i)=>{let x=30+i*(w-42)/5,y=h-24-(t[k]/mx)*(h-40);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke()}
+  line('i','#10b981');line('e','#e85d3a');
+}
+
+function renderAnalytics(){
+  const exp=data.filter(x=>x.category!=='Income'),inc=data.filter(x=>x.category==='Income'),
+        spent=exp.reduce((s,x)=>s+x.amount,0),earned=inc.reduce((s,x)=>s+x.amount,0),
+        bal=earned-spent,sav=earned?Math.max(0,Math.round(bal/earned*100)):0,
+        score=Math.max(15,Math.min(100,Math.round(55+sav*.45-(bal<0?25:0))));
+
+  $('healthScore').textContent=score;
+  $('healthLabel').textContent=score>=80?'Excellent':score>=60?'Healthy':score>=40?'Needs work':'At risk';
+  $('gauge').style.setProperty('--score',(score*1.8)+'deg');
+
+  const by={};exp.forEach(x=>by[x.category]=(by[x.category]||0)+x.amount);
+  let cur=0,entries=Object.entries(by).sort((a,b)=>b[1]-a[1]),
+      parts=entries.map(([n,v])=>{let s=cur;cur+=v/Math.max(spent,1)*100;return`${categoryColors[n]||'#888'} ${s}% ${cur}%`});
+  $('donut').style.background=`conic-gradient(${parts.length?parts.join(','):'#e0d6cc 0 100%'})`;
+  $('donutTotal').innerHTML=`<b>${fmt(spent)}</b><span class="muted">total</span>`;
+  $('categoryLegend').innerHTML=entries.slice(0,5).map(([n,v])=>`<div class="legend-row"><i class="dot" style="background:${categoryColors[n]||'#888'}"></i><span>${n}</span><b>${Math.round(v/Math.max(spent,1)*100)}%</b></div>`).join('')||'<span class="muted">Add expenses to see.</span>';
+
+  const top=entries[0],tips=[];
+  if(top)tips.push(`<div class="recommendation"><b>${top[0]} is your top category</b><div class="muted">${fmt(top[1])} spent. Reducing by 10% saves ${fmt(top[1]*.1)}.</div></div>`);
+  tips.push(`<div class="recommendation ${sav>=20?'good':''}"><b>Savings rate: ${sav}%</b><div class="muted">${sav>=20?'Meeting the 20% target.':'Try saving at least 20% of income.'}</div></div>`);
+  $('recommendations').innerHTML=tips.join('');
+  drawTrend(exp,inc);
+}
+
+/* Demo */
+function seedDemo(){
+  if(data.length&&!confirm('Replace with demo data?'))return;
+  let now=new Date(),d=n=>new Date(now.getFullYear(),now.getMonth(),n).toISOString().slice(0,10);
+  data=[
+    {id:1,merchant:'Monthly allowance',amount:15000,category:'Income',date:d(1),source:'manual'},
+    {id:2,merchant:'Netflix',amount:499,category:'Entertainment',date:d(5),source:'manual'},
+    {id:3,merchant:'Burger King',amount:551,category:'Food',date:d(12),source:'manual'},
+    {id:4,merchant:'Groceries',amount:850,category:'Shopping',date:d(18),source:'manual'},
+    {id:5,merchant:'Metro card',amount:600,category:'Transport',date:d(22),source:'manual'}
+  ];saveData();render();
+}
+
+/* Boot */
+const baseRender=render;
+render=function(){baseRender();renderAnalytics()};
+window.addEventListener('resize',()=>{if(activeUser)renderAnalytics()});
+initAuth();
+</script>
+</body></html>
